@@ -2,7 +2,7 @@ import options, strutils
 import token, definitions, feeder
 
 # TODO: maybe idntlist can be moved to token.nim
-var idnlist: seq[string] = @["Test", "Test2", "Test3", "Test4", "Test5"];
+var idnlist: seq[string] = @[];
 
 proc `$`(t: Token): string {.inline.} =
   result = $t.kind & "("
