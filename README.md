@@ -23,6 +23,9 @@ anything else?
 
 There are currently no plans to create debugging features or compiler optimizations.
 
+I am also doing this to learn nim. I know my code is bad and i could have done X.
+Once I make the repo public, you may tell me all about it.
+
 ## building
 
 ### debug
