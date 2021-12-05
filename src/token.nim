@@ -42,6 +42,18 @@ proc toToken*(n: int, f: Feeder): Token =
     value: cast[array[SIZE, uint8]](n)
   )
 
+
+# possibly make this bunch of functions generic somehow
+# unlikely
+
+# proc toToken*(a: auto, f: Feeder): Token =
+#   Token(
+#     kind: Ident,
+#     line: f.line, column: f.column,
+#     depth: f.depth,
+#     value: cast[array[SIZE, uint8]](a)
+#   )
+
 proc toToken*(s: string, i: int, f: Feeder): Token =
   Token(
     kind: Ident,
