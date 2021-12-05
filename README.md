@@ -55,5 +55,6 @@ creates `file` which should hopefully be an elf64 linux executable
 - List of C keywords i used: https://en.cppreference.com/w/c/keyword
 - Book I bought: compilers, principlas, techniques, and tools by Alfred V.Aho, Ravi Sethi, and Jeffery D.Ullman (english version)
 - Elf header man page: https://man7.org/linux/man-pages/man5/elf.5.html
+- Understanding the ELF file format: https://linuxhint.com/understanding_elf_file_format/
 
 still looking for a non terrible asm reference
