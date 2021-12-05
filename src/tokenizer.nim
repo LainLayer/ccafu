@@ -90,6 +90,17 @@ proc test*() =
   let text = readFile("test.c").pad()
   let x = parse(text)
 
+
+  # wow i can do this in nim.
+  # i can get rid of idnlist now
+  # TODO: remove idnlist, and change the toToken function for strings
+  let fff = "test string cool nice"
+  echo sizeof(fff)
+  let zzz = cast[array[8, uint8]](fff)
+  let lll = cast[string](zzz)
+
+  echo lll
+
   for z in x:
     echo z
   
