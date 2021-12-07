@@ -32,7 +32,8 @@ type Keywords* = enum
 proc tryKeyword*(s: string): Option[Keywords] =
   let index = keywords.binarySearch(s)
   if index >= 0:
-    result = some(cast[Keywords](index))
+    # result = some(cast[Keywords](index))
+    result = some(Keywords(index))
 
 
 
@@ -64,7 +65,8 @@ const opchars* = operators.join().items.toSet()
 proc tryOperator*(s: string): Option[Operators] =
   let index = operators.binarySearch(s)
   if index >= 0:
-    result = some(cast[Operators](index))
+    # result = some(cast[Operators](index))
+    result = some(Operators(index))
 
 #  __  __ ___ _____ _      ___ _  _   _   ___    _   ___ _____ ___ ___  ___ 
 # |  \/  | __|_   _/_\    / __| || | /_\ | _ \  /_\ / __|_   _| __| _ \/ __|
@@ -81,7 +83,8 @@ type Meta* = enum
 proc toMeta*(c: char): Meta =
   let index = meta.binarySearch(c)
   if index >= 0:
-    result = cast[Meta](index)
+    # result = cast[Meta](index)
+    result = Meta(index)
 
 # __      ___  _ ___ _____ ___ ___ ___  _   ___ ___ 
 # \ \    / / || |_ _|_   _| __/ __| _ \/_\ / __| __|
