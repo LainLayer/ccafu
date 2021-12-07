@@ -24,7 +24,11 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
+      
+      # install nimble
+      - name: install nimble
+        run: curl https://nim-lang.org/choosenim/init.sh -sSf | sh
+      
       # Runs a single command using the runners shell
       - name: build this thing
         run: nimble build --verbose
