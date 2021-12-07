@@ -52,10 +52,23 @@ creates `file` which should hopefully be an elf64 linux executable
 
 - Porth language programming stream playlist: https://www.youtube.com/watch?v=8QP2fDBIxjM&list=PLpM-Dvs8t0VbMZA7wW9aR3EtBqe2kinu4
 - Porth language git: https://gitlab.com/tsoding/porth
+- Bang Programming language coding stream playlist: https://www.youtube.com/watch?v=7a_YKCeMCMA&list=PLpM-Dvs8t0Vbr6JPYZwudpU4KfPnDoJOJ
 - Making programming language parsers: https://www.youtube.com/watch?v=lcF-HzlFYKE
 - List of C keywords i used: https://en.cppreference.com/w/c/keyword
 - Book I bought: compilers, principlas, techniques, and tools by Alfred V.Aho, Ravi Sethi, and Jeffery D.Ullman (english version)
 - Elf header man page: https://man7.org/linux/man-pages/man5/elf.5.html
 - Understanding the ELF file format: https://linuxhint.com/understanding_elf_file_format/
 
+
+
+### These are a blog series "Introduction to the ELF Format" by Keith Makan:
+- The ELF Header (Part 1): https://blog.k3170makan.com/2018/09/introduction-to-elf-format-elf-header.html
+- Understanding Program Headers (Part 2): https://blog.k3170makan.com/2018/09/introduction-to-elf-format-part-ii.html
+- The Section Headers (Part 3): https://blog.k3170makan.com/2018/09/introduction-to-elf-file-format-part.html
+- The Symbol Table and Relocations (part 4): https://blog.k3170makan.com/2018/10/introduction-to-elf-format-part-vi.html
+
+### ASM
 still looking for a non terrible asm reference
+
+no idea if this even makes sense but its a start:
+- https://en.wikipedia.org/wiki/X86_instruction_listings
