@@ -1,22 +1,20 @@
 import options, strutils
 import token, definitions, feeder
 
-# TODO: maybe idntlist can be moved to token.nim
-var idnlist: seq[string] = @[];
 
 proc `$`(t: Token): string {.inline.} =
   result = $t.kind & "("
   case t.kind:
   of Ident:
-    result &= idnlist[cast[int](t.value)]
+    result &= t.identValue
   of Operator:
-    result &= $cast[Operators](t.value)
+    result &= $t.operatorValue
   of Number:
-    result &= $cast[int](t.value)
+    result &= $t.numberValue
   of MetaToken:
-    result &= $cast[Meta](t.value)
+    result &= $t.metaValue
   of Keyword:
-    result &= $cast[Keywords](t.value)
+    result &= $t.keywordValue
 
   result &= ")"
   
@@ -29,10 +27,9 @@ proc parseWord(f: var Feeder): Token {.inline.} =
     buffer.add c
   let attempt = tryKeyword(buffer)
   if attempt.isSome():
-    return attempt.get().toToken(f)
+    return token attempt.get()
   else:
-    idnlist.add(buffer)
-    return buffer.toToken(idnlist.len - 1, f)
+    return token buffer
 
 
 proc parseOperator(f: var Feeder): Token {.inline.} =
@@ -43,7 +40,7 @@ proc parseOperator(f: var Feeder): Token {.inline.} =
     buffer.add c
   let attempt = tryOperator(buffer)
   if attempt.isSome():
-    return attempt.get().toToken(f)
+    return token attempt.get()
   else:
     assert false, "unexpected operator " & buffer
 
@@ -54,7 +51,7 @@ proc parseNumber(f: var Feeder): Token {.inline.} =
     let c = f.next()
     if not (c in Digits): break
     buffer.add c
-  return buffer.parseInt().toToken(f)
+  return token buffer.parseInt()
   
 
 
@@ -70,7 +67,7 @@ proc parse(s: string): seq[Token] =
     of Digits:
       result.add parseNumber(f)
     of meta:
-      result.add f.top().toMeta().toToken(f)
+      result.add token f.top().toMeta()
       discard f.next()
     of ws:
       discard f.next()
@@ -91,15 +88,6 @@ proc test*() =
   let x = parse(text)
 
 
-  # wow i can do this in nim.
-  # i can get rid of idnlist now
-  # TODO: remove idnlist, and change the toToken function for strings
-  let fff = "test string cool nice"
-  echo sizeof(fff)
-  let zzz = cast[array[8, uint8]](fff)
-  let lll = cast[string](zzz)
-
-  echo lll
 
   for z in x:
     echo z
