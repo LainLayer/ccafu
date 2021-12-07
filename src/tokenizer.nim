@@ -12,7 +12,7 @@ proc `$`(t: Token): string {.inline.} =
   of Number:
     result &= $t.numberValue
   of MetaToken:
-    result &= $t.metaValue
+    result &= '\"' & $t.metaValue & '\"'
   of Keyword:
     result &= $t.keywordValue
 
