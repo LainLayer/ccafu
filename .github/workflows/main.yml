@@ -27,7 +27,7 @@ jobs:
       
       # install nimble
       - name: install nimble
-        run: curl https://nim-lang.org/choosenim/init.sh -sSf | sh
+        run: curl https://nim-lang.org/choosenim/init.sh -sSf | sh -s -- -y
       
       # Runs a single command using the runners shell
       - name: build this thing
