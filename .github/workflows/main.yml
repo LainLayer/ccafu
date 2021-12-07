@@ -31,4 +31,4 @@ jobs:
       
       # Runs a single command using the runners shell
       - name: build this thing
-        run: nimble build --verbose
+        run: PATH=/home/runner/.nimble/bin:$PATH nimble build --verbose
