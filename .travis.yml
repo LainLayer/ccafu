@@ -1,0 +1,9 @@
+language: nim
+nim:
+    - "1.6.x"
+os:
+    - linux
+    - osx
+    - windows
+script:
+    - nimble build
