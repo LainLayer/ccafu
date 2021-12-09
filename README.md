@@ -32,7 +32,7 @@ Once I make the repo public, you may tell me all about it.
 ### debug
 
 ```
-nimble build
+nimble build -d:debug
 ```
 
 ### release

@@ -1,5 +1,5 @@
 import options, strutils
-import token, definitions, feeder
+import token, definitions, feeder, logger
 
 
 proc `$`(t: Token): string {.inline.} =
@@ -27,9 +27,10 @@ proc parseWord(f: var Feeder): Token {.inline.} =
     buffer.add c
   let attempt = tryKeyword(buffer)
   if attempt.isSome():
-    return token attempt.get()
+    result = token attempt.get()
   else:
-    return token buffer
+    result = token buffer
+  debug $result
 
 
 proc parseOperator(f: var Feeder): Token {.inline.} =
@@ -40,9 +41,10 @@ proc parseOperator(f: var Feeder): Token {.inline.} =
     buffer.add c
   let attempt = tryOperator(buffer)
   if attempt.isSome():
-    return token attempt.get()
+    result = token attempt.get()
+    debug $result
   else:
-    assert false, "unexpected operator " & buffer
+    err "unexpected operator " & buffer
 
 
 proc parseNumber(f: var Feeder): Token {.inline.} =
@@ -51,7 +53,8 @@ proc parseNumber(f: var Feeder): Token {.inline.} =
     let c = f.next()
     if not (c in Digits): break
     buffer.add c
-  return token buffer.parseInt()
+  result = token buffer.parseInt()
+  debug $result
   
 
 
@@ -68,11 +71,12 @@ proc parse(s: string): seq[Token] =
       result.add parseNumber(f)
     of meta:
       result.add token f.top().toMeta()
+      debug $result[ result.len - 1 ]
       discard f.next()
     of ws:
       discard f.next()
     else:
-      assert(false, "unexpected character '" & f.top() & "'")
+      err "unexpected character '" & f.top() & "'"
 
 
 
@@ -84,13 +88,13 @@ proc pad(s: string): string =
     result &= '\n'
 
 proc test*() =
-  let text = readFile("test.c").pad()
+  let filename = "test.c"
+  info "reading file " & filename
+  let text = readFile(filename).pad()
+  info "read " & $text.len & " characters"
   let x = parse(text)
 
-
-
-  for z in x:
-    echo z
+  info "parsed " & $x.len & " tokens"
   
 
   
