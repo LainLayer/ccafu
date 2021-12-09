@@ -25,6 +25,12 @@ proc tryKeyword*(s: string): Option[Keywords] =
   try: return some(parseEnum[Keywords](s))
   except ValueError: discard
 
+proc isTypeKeyword*(k: Keywords): bool =
+  case k:
+  of Int, Float, Char, Double:
+    return true
+  else:
+    return false
 
 
 #   ___  ___ ___ ___    _ _____ ___  ___  ___ 
@@ -79,4 +85,5 @@ proc toMeta*(c: char): Meta =
                                                   
 
 const ws* = {'\t', '\n', '\v', '\f', '\r', ' '}
+
 

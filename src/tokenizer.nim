@@ -2,23 +2,6 @@ import options, strutils
 import token, definitions, feeder, logger
 
 
-proc `$`(t: Token): string {.inline.} =
-  result = $t.kind & "("
-  case t.kind:
-  of Ident:
-    result &= t.identValue
-  of Operator:
-    result &= $t.operatorValue
-  of Number:
-    result &= $t.numberValue
-  of MetaToken:
-    result &= '\"' & $t.metaValue & '\"'
-  of Keyword:
-    result &= $t.keywordValue
-
-  result &= ")"
-  
-
 proc parseWord(f: var Feeder): Token {.inline.} =
   var buffer = $f.top()
   while f.hasMore():
@@ -59,7 +42,7 @@ proc parseNumber(f: var Feeder): Token {.inline.} =
 
 
 
-proc parse(s: string): seq[Token] =
+proc tokenize*(s: string): seq[Token] =
   var f = s.newFeeder()
   while f.hasMore():
     case f.top():
@@ -82,19 +65,10 @@ proc parse(s: string): seq[Token] =
 
 # when working with utter crap like Visual Studio Code, which doesnt append
 # a newline to the end of the file, we need to add one.
-proc pad(s: string): string =
+proc pad(s: string): string {.inline.} =
   result = s
   if not s.endsWith('\n'):
     result &= '\n'
 
-proc test*() =
-  let filename = "test.c"
-  info "reading file " & filename
-  let text = readFile(filename).pad()
-  info "read " & $text.len & " characters"
-  let x = parse(text)
-
-  info "parsed " & $x.len & " tokens"
-  
 
   

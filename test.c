@@ -1,9 +1,7 @@
+void puti(int a);
 
-
-int main (void) {
+int main () {
     int a = 2;
-    int b = 43;
-    int c = a + b;
-    a++;
-    return c;
+    puti(a);
+    return 0;
 }

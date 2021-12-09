@@ -15,11 +15,12 @@ proc log*(l: static[LogLevel], s: string) {.inline.} =
   echo fmt"[{tmp:<14}]: {s}"
 
 {.experimental: "callOperator".}
-template `()`*(l: static[LogLevel], s: string) =
+proc `()`*(l: static[LogLevel], s: string) =
   case l:
   of debug:
-    var name = getFrame().procname
-    if defined(debug): l.log($name & " -> " & s)
+    # TODO: workaround
+    # var name = getFrame().procname
+    if defined(debug): l.log(s)
   of cmd:
     l.log("$ " & s)
     let output = execCmdEx(s)
