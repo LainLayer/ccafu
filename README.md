@@ -7,9 +7,9 @@ This repo will remain private until I am done with university.
 ## goals
 
 - tokenize code into tokens (i am here, 80% done)
-- parse token list into something
+- parse token list into something (5%)
 - emit some structure i can easily convert into instructions
-- generate elf64 header
+- generate elf64 header (maybe not, documentation is really bad)
 - create binary file
 - have actually useful errors
 

@@ -1,4 +1,4 @@
-import token, strformat, definitions, logger
+import token, strformat, definitions, logger, strutils
 
 
 type Scope = object

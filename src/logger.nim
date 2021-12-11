@@ -1,4 +1,7 @@
-import strformat, strutils, osproc
+import strformat, strutils
+import osproc
+
+
 
 type LogLevel* {.pure.} = enum
   err   = 31,
@@ -7,28 +10,53 @@ type LogLevel* {.pure.} = enum
   debug = 35,
   info  = 36
 
-func paint*(c: int, s: string): string {.compileTime.} =
+func paint*(c: int, s: string): string =
   &"\e[{c}m{s}\e[0m"
 
-proc log*(l: static[LogLevel], s: string) {.inline.} = 
+proc log*(l: static[LogLevel], s: string) {.inline.} =
   const tmp: string = l.int().paint(($l).toupper())
   echo fmt"[{tmp:<14}]: {s}"
 
 {.experimental: "callOperator".}
-proc `()`*(l: static[LogLevel], s: string) =
-  case l:
-  of debug:
-    # TODO: workaround
-    # var name = getFrame().procname
-    if defined(debug): l.log(s)
-  of cmd:
-    l.log("$ " & s)
-    let output = execCmdEx(s)
-    for row in output.output.strip().split('\n'):
-      if not row.isEmptyOrWhitespace: l.log("> " & row)
-    l.log("returned status: " & $(output.exitCode))
-  of err:
+template `()`*(l: static[LogLevel], s: string) =
+  when l == debug:
+
+    # cant print the proc name in release mode
+    when (not defined(release)) and defined(debug):
+      var name: string
+      name = $getFrame().procname & "() "
+      l.log($name & s)
+    when defined(release) and defined(debug):
+      l.log(s)
+      
+  elif l == cmd:
+    let 
+      output = execCmdEx(s)
+      lines  = output.output.splitLines()
+
+    var
+      pr = "$ " & s
+      failed: bool = false
+    
+    if output.exitCode == 0:
+      cmd.log(paint(info.int, "SUCCESS") & " " & pr)
+    else:
+      cmd.log(paint(err.int, "FAILED") & " " & $output.exitCode & " " & pr)
+      failed = true
+    
+    for line in lines:
+      if not line.isEmptyOrWhitespace: l.log("> " & line)
+
+    if failed: quit(1)
+      
+  elif l == err:
     l.log(s)
     quit(1)
   else:
     l.log(s)
+
+
+when defined(release) and defined(debug):
+  # still havent found a way to do that in release
+  # not that i think it will be necessary anyway
+  info "release build in debug doesnt support showing procedure names"
