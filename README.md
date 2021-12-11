@@ -50,6 +50,7 @@ creates `file` which should hopefully be an elf64 linux executable
 
 ## references
 
+- Compiler Series: https://github.com/bisqwit/compiler_series
 - Porth language programming stream playlist: https://www.youtube.com/watch?v=8QP2fDBIxjM&list=PLpM-Dvs8t0VbMZA7wW9aR3EtBqe2kinu4
 - Porth language git: https://gitlab.com/tsoding/porth
 - Bang Programming language coding stream playlist: https://www.youtube.com/watch?v=7a_YKCeMCMA&list=PLpM-Dvs8t0Vbr6JPYZwudpU4KfPnDoJOJ
