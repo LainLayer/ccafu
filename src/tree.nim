@@ -1,6 +1,11 @@
 import token, strformat, definitions, logger, strutils
 
 
+# TODO: Scrap this file
+# 1) check https://rosettacode.org/wiki/Visualize_a_tree#Nim
+# 2) check https://raw.githubusercontent.com/bisqwit/compiler_series/master/ep1/jit-conj-parser1.png
+# 3) implement this instead of whatever mess i did below
+
 type Scope = object
   identifiers: seq[string] # TODO: make it save the type
   body: seq[Token]
