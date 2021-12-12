@@ -33,20 +33,23 @@ type
       to: Expression
 
   StatementType = enum
-    IfStmt, WhileStmt, ReturnStmt, VarStmt, Block
+    IfStmt, WhileStmt, ReturnStmt, VarStmt, Block, ExprStmt
 
   Statement = ref object
-    expr: Expression
     case statementType: StatementType:
     of IfStmt, WhileStmt:
+      condExpr: Expression
       body: Statement
     of VarStmt:
-      names: seq[string]
+      assignExpr: Expression
+      name: string
     of Block:
-      scope: seq[Variable]
+      scope: seq[Variable] # TODO: push this to a stack
       instructions: seq[Statement]
+    of ReturnStmt:
+      value: Expression
     else:
-      discard
+      self: Expression
       
   DataType = enum
     IntegerType = "int",
@@ -96,12 +99,23 @@ var
 
 template current(): Token = tokens[ip]
 
-template finished(): bool = ip >= tokens.len
+template finished(): bool = ip >= (tokens.len-1)
+
+template peek(n: int): Token =
+  if ip+n < tokens.len:
+    tokens[ip+n]
+  else:
+    err fmt"got end of file but expected more tokens on current"
 
 proc next(n = 1): Token {.inline, discardable.} =
+  let c = current()
   ip += n
-  if not finished(): tokens[ip]
-  else: err "got end of file but expected more tokens"
+  if ip < tokens.len:
+    debug fmt"{n} + {ip:>3} + {c:<17} -> {tokens[ip]:>17}"
+    return tokens[ip]
+  else:
+    debug "failed"
+    err fmt"got end of file but expected more tokens on current = {peek(-n)} {n}"
 
 proc expect(n: int, what: Token | TokenKind) =
   if ip + n >= tokens.len:
@@ -130,18 +144,94 @@ proc expectAnyType(n: int) =
   else:
     discard
 
-proc parseExpression() = discard
+proc parseExpression(): Expression =
+  debug fmt"skipping expression"
+  while not( current() == (token RBrace) or current() == (token SemiColon)):
+    next()
+    # inc ip
+  return Expression(exprType: IntLit, intValue: 1)
 
 proc parseStatement(): Statement =
-  while not (current() == (token RBrace)): # TODO: implement `==` for all the token enums
-    inc ip
-  inc ip
-  return result
+  if current() == (token LBrace): # block statement
+    debug "block"
+    let ret = Statement(statementType: Block)
+    next()
+    while current() != (token RBrace):
+      ret.instructions.add(parseStatement())
+    if not finished(): next()
+    return ret
 
-proc parseFunction() = discard
+  elif current() == (token If):
+    debug "if"
+    expect(1, token LParen)
+    next(2)
+    if current() == (token RParen):
+      err "expression expected in if statement"
+    let s = Statement(
+      statementType: IfStmt,
+      condExpr: parseExpression(),
+      body: parseStatement())
+    if not finished(): next()
+    debug "end if"
+    return s
+    
+  elif current() == (token While):
+    debug "while"
+    expect(1, token LParen)
+    next(2)
+    if peek(1) == (token RParen):
+      err "expression expected in if statement"
+    let s = Statement(
+      statementType: WhileStmt,
+      condExpr: parseExpression(),
+      body: parseStatement())
+    if not finished(): next()
+    debug "end while"
+    return s
+
+  elif current() == (token Return):
+    debug "return"
+    next()
+    let s = Statement(
+        statementType: ReturnStmt,
+        value: parseExpression())
+    expect(0, token SemiColon)
+    if not finished(): next()
+    debug "end return"
+    return s
+
+  elif current().isType():
+    debug "variable"
+    expect(1, Ident)
+    let n = next().identValue
+    expect(1, token Equal)
+    next(2)
+
+    let s = Statement(
+        statementType: VarStmt,
+        assignExpr: parseExpression(),
+        name: n)
+    expect(0, token SemiColon)
+    if not finished(): next()
+    debug "end variable"
+    return s
+    
+  else:
+    debug "standalone expression"
+    let s = Statement(
+        statementType: ExprStmt,
+        self: parseExpression())
+    # next()
+    expect(0, token SemiColon)
+    debug "end standalone expression"
+    return s
+
+  
+proc parseFunction() = discard # TODO: oops. move code below into here
 
 proc parseProgram(): Program =
   while not finished():
+    debug "function"
     expectAnyType(0)
     let dt   = current()
     expect(1, Ident)
@@ -172,17 +262,43 @@ proc parseProgram(): Program =
 
     fn.body = parseStatement()
     result.functions.add(fn)
+    debug "end function"
 
-proc `$`*(v: Variable): string = fmt"{v.dataType} {v.name}"
 
-proc `$`*(s: seq[Variable]): string = s.join(", ")
 
-proc `$`*(f: Function): string = fmt"{f.name} ({f.args}) -> {f.ret};"
+proc `$`*(e: Expression):    string = "expression"
+
+proc `$`*(s: Statement):     string =
+  case s.statementType:
+  of IfStmt:
+    return fmt"if ({s.condExpr}):"
+  of WhileStmt:
+    return fmt"while ({s.condExpr}):"
+  of ReturnStmt:
+    return fmt"return {s.value}"
+  of VarStmt:
+    return fmt"var {s.name} := {s.assignExpr}"
+  of Block:
+    return "block:"
+  of ExprStmt:
+    return $s.self
+  
+proc `$`*(v: Variable):      string = fmt"{v.dataType} {v.name}"
+
+proc `$`*(s: seq[Variable]): string = "(" & s.join(", ") & ")"
+
+proc `$`*(f: Function):      string =
+  result = &"{f.name:<5} {f.args:<15} -> {f.ret}:\n"
+  result &= indent($f.body, 2) & "\n"
+  case f.body.statementType:
+  of Block:
+    result &= f.body.instructions.join("\n").indent(4)
+  else:
+    discard
+  
 
 proc `$`*(p: Program): string =
-  result = "functions:\n"
-  for f in p.functions:
-    result &= indent($f, 2) & "\n"
+  "functions:\n" & p.functions.join("\n\n").indent(2)
 
 
 proc toProgram*(tokenList: seq[Token]): Program =

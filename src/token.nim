@@ -4,6 +4,7 @@ type TokenKind* = enum
   Ident, Operator, Number, MetaToken, Keyword
 
 type Token* = object
+  row, col: int
   children*: seq[Token]
   case kind*: TokenKind:
   of Ident:

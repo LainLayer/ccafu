@@ -10,10 +10,11 @@ int add(int a, int b) {
 }
 
 int fact(int n) {
-	if(n == 0) return 1;
 	return n * fact(n-1);
 }
 
 void test() {
-	
+	int z = 4;
 }
+
+int singleSt(int b) return b + 1;
