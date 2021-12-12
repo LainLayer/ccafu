@@ -20,6 +20,12 @@ type Keywords* = enum
   Volatile = "volatile", While    = "while"   
 
 
+proc isType*(k: Keywords): bool =
+  case k:
+  of Int, Float, Double, Void, Char:
+    return true
+  else:
+    return false
 
 proc tryKeyword*(s: string): Option[Keywords] =
   try: return some(parseEnum[Keywords](s))

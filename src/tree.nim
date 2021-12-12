@@ -1,144 +1,190 @@
-import token, strformat, definitions, logger, strutils
+import token, logger, strformat, definitions, strutils
 
-
-# TODO: Scrap this file
+# implement a tree visualization when im done glueing this together
 # 1) check https://rosettacode.org/wiki/Visualize_a_tree#Nim
-# 2) check https://raw.githubusercontent.com/bisqwit/compiler_series/master/ep1/jit-conj-parser1.png
-# 3) implement this instead of whatever mess i did below
 
-type Scope = object
-  identifiers: seq[string] # TODO: make it save the type
-  body: seq[Token]
+# TODO: store line and column data inside token
+
+type
+  ExpressionType = enum
+    IntLit, StrLit, Identifier,
+    Indexing, FunctionCall, BinaryOp,
+    UnaryOp, PostInc, PostDec
+
+  Expression = ref object
+    case exprType: ExpressionType:
+    of IntLit:
+      intValue: int
+    of StrLit:
+      strValue: string
+    of Identifier:
+      identValue: string
+    of Indexing:
+      subject: string
+      index: Expression
+    of FunctionCall:
+      funcName: string
+      arguments: seq[Expression]
+    of BinaryOp:
+      lhs, rhs: Expression
+    of UnaryOp:
+      on: Expression
+    of PostInc, PostDec:
+      to: Expression
+
+  StatementType = enum
+    IfStmt, WhileStmt, ReturnStmt, VarStmt, Block
+
+  Statement = ref object
+    expr: Expression
+    case statementType: StatementType:
+    of IfStmt, WhileStmt:
+      body: Statement
+    of VarStmt:
+      names: seq[string]
+    of Block:
+      scope: seq[Variable]
+      instructions: seq[Statement]
+    else:
+      discard
+      
+  DataType = enum
+    IntegerType = "int",
+    FloatType   = "float",
+    DoubleType  = "double",
+    CharType    = "char",
+    VoidType    = "void"
+    
+  Variable = tuple
+    name: string
+    dataType: DataType
+    
+  Function = object
+    name: string
+    ret: DataType
+    args: seq[Variable]
+    body: Statement
+    
+  Program = object
+    scope: seq[Variable] # unused for now
+    functions: seq[Function]
+
+
+proc toDataType(t: Token): DataType =
+  if not (t.kind == Keyword):
+    err fmt"expected token {t} to be a keyword"
+
+  case t.keywordValue:
+  of Int:
+    return IntegerType
+  of Float:
+    return FloatType
+  of Double:
+    return DoubleType
+  of Char:
+    return CharType
+  of Void:
+    return VoidType
+  else:
+    err fmt"keyword {t} is not a valid type"
+
 
 var
-  ip = 0
   tokens: seq[Token]
-  tree: seq[Token]
-  scopeStack: seq[Scope]
+  ip = 0
+  currentFunction = "" # TODO: track this
 
 template current(): Token = tokens[ip]
 
 template finished(): bool = ip >= tokens.len
 
-template currentScope(): Scope = scopeStack[scopeStack.len - 1]
-
-proc next(n=1): Token =
+proc next(n = 1): Token {.inline, discardable.} =
   ip += n
-  if not finished():
-    return tokens[ip]
+  if not finished(): tokens[ip]
+  else: err "got end of file but expected more tokens"
 
-proc peek(n: int): Token =
-  if ip + n < tokens.len:
-    return tokens[ip + n]
+proc expect(n: int, what: Token | TokenKind) =
+  if ip + n >= tokens.len:
+    err fmt"expected {what} but got end of file"
+  elif tokens[ip + n] != what:
+    err fmt"expected {what} but got {tokens[ip + n]}"
   else:
-    err "unexpected end of file"
+    return
 
-proc expect(where: int, what: Token | TokenKind) =
-  if ip + where >= tokens.len:
-    err "expected " & $what & " but got end of file"
-  if not (tokens[ip + where] == what):
-    err "expected " & $what & " but got " & $tokens[ip + where]
-
-proc inScope(s: string): bool =
-  for ta in scopeStack:
-    if ta.identifiers.contains(s):
-      return true
-  return false
-
-template popScopeStack() = discard scopeStack.pop()
-
-proc defineIdent(t: Token) =
-  if not (t.kind == Ident): err "got " & $t & "in defineIdent"
-  if not inScope(t.identValue):
-    currentScope().identifiers.add(t.identValue)
+proc expect(n: int, what: DataType) =
+  # not sure if i need this
+  if ip + n >= tokens.len:
+    err fmt"expected {what} but got end of file"
+  elif not tokens[ip + n].isType():
+    err fmt"expected type but got {tokens[ip + n]}"
   else:
-    err "redefinition of " & t.identValue
+    let t = tokens[ip + n].toDataType
+    if t != what:
+      err fmt"expected type {what} but got {tokens[ip + n]}"
 
-
-proc parseExpression() = # TODO
-  debug "parse expression"
-
-proc parseBlock() = # TODO
-  debug "parse block"
-
-proc parseFunctionDeclaration() =
-  debug "parse function declaration"
-  let name = next()
-  if scopeStack.len != 1:
-    err "function declaration not allowed outside of global scope"
-  discard next(2) # skip '('
-
-  # open new scope
-  scopeStack.add Scope(
-      identifiers: @[],
-      body: @[])
-  
-  while current() != token RParen:
-    expect(0, token Int) # TODO: add more types
-    expect(1, Ident)
-    defineIdent(peek(1))
-    
-    let p = next(2)
-    if p == token Comma:
-      continue
-    elif p == token RParen:
-      break
-
-  let p = next(1)
-  if p == token SemiColon:
-    popScopeStack()
-    discard next()
-    return # function declaration without implementation
-  elif p == token LBrace:
-    discard next()
-    parseBlock()
-    
-    
-    
-  
-
-proc parseVariableDeclaration() =
-  debug "parse variable declaration"
-  let name = next()
-  defineIdent(name)
-  var node = token Equal
-  node.children.add(name)
-  tree.add(node)
-  discard next(2) # skip '='
-  parseExpression()
-  
-  
-
-proc parseDeclaration() =
-  expect(1, Ident)
-  let p = peek(2)
-  if p == (token Equal):
-    parseVariableDeclaration()
-  elif p == (token LParen):
-    parseFunctionDeclaration()
+proc expectAnyType(n: int) =
+  if ip + n >= tokens.len:
+    err "expected any type but got end of file"
+  elif not tokens[ip + n].isType():
+    err fmt"expected any type but got {tokens[ip + n]} at ip {ip}"
   else:
-    err "unexpected token " & $p & ". expected ( or =."
+    discard
 
-proc parse() =
+proc parseExpression() = discard
+
+proc parseStatement(): Statement =
+  while not (current() == (token RBrace)): # TODO: implement `==` for all the token enums
+    inc ip
+  inc ip
+  return result
+
+proc parseFunction() = discard
+
+proc parseProgram(): Program =
   while not finished():
-    case current().kind:
-    of Keyword:
-      case current().keywordValue:
-      of Int, Void:
-        parseDeclaration()
-      else:
-        err "not implemented " & $current()
-    else:
-      echo tree
-      err "not implemented " & $current()
+    expectAnyType(0)
+    let dt   = current()
+    expect(1, Ident)
+    let name = next()  # move to identifier
+    next()             # move to '('
+    expect(0, token LParen)
+    var fn = Function(name: name.identValue, args: @[], ret: dt.toDataType())
+    next()
+    if current() == (token RParen): # no arguments
+      next()
+    else:                           # function has arguments
+      while not finished():
+        expectAnyType(0)
+        expect(1, Ident)
+        let
+          t = current().toDataType()
+          n = next().identValue
+          
+        fn.args.add (n,t) 
+        if next() == (token Comma):
+          next()
+          continue
+        elif current() == (token RParen):
+          next()
+          break
+        else:
+          err fmt"expected , or ) but got {current()}" 
 
-proc toTree*(t: seq[Token]): seq[Token] =
-  # TODO: add function token type and push it to the tree
-  tokens = t
-  scopeStack.add Scope(
-    identifiers: @[],
-    body: @[]) # global scope
+    fn.body = parseStatement()
+    result.functions.add(fn)
 
-  # start parsing
-  parse()
-  echo tree
+proc `$`*(v: Variable): string = fmt"{v.dataType} {v.name}"
+
+proc `$`*(s: seq[Variable]): string = s.join(", ")
+
+proc `$`*(f: Function): string = fmt"{f.name} ({f.args}) -> {f.ret};"
+
+proc `$`*(p: Program): string =
+  result = "functions:\n"
+  for f in p.functions:
+    result &= indent($f, 2) & "\n"
+
+
+proc toProgram*(tokenList: seq[Token]): Program =
+  tokens = tokenList
+  return parseProgram()

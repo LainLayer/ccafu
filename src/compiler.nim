@@ -11,6 +11,6 @@ debug "tokenizing finished."
 
 debug " -==-==-== >-< ==-==-==-"
 
-let program = toTree(tokens)
+let program = toProgram(tokens)
 echo program
 

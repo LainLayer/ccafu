@@ -18,6 +18,13 @@ type Token* = object
     keywordValue*: Keywords
 
 
+proc isType*(t: Token): bool =
+  case t.kind:
+  of Keyword:
+    return t.keywordValue.isType()
+  else:
+    return false
+
 proc `==`*(a, b: Token): bool =
   if a.kind != b.kind: return false
 
