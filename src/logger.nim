@@ -1,7 +1,4 @@
 import strformat, strutils
-import osproc
-
-
 
 type LogLevel* {.pure.} = enum
   err   = 31,
@@ -10,12 +7,32 @@ type LogLevel* {.pure.} = enum
   debug = 35,
   info  = 36
 
+when not defined(js):
+  import osproc
+else:
+  import workaround
+  proc toColor(l: LogLevel): string =
+    return case l:
+    of err: "red"
+    of cmd: "green"
+    of warn: "yellow"
+    of debug: "pink"
+    else: "lime"
+
+
+
+  
+
 func paint*(c: int, s: string): string =
-  &"\e[{c}m{s}\e[0m"
+  return &"\e[{c}m{s}\e[0m"
 
 proc log*(l: static[LogLevel], s: string) {.inline.} =
-  const tmp: string = l.int().paint(($l).toupper())
-  echo fmt"[{tmp:<14}]: {s}"
+  when not defined(js):
+    const tmp: string = l.int().paint(($l).toupper())
+    echo fmt"[{tmp:<14}]: {s}"
+  else:
+    const tmp = fmt"[%c{($l).toupper():<5}%c]: "
+    jsecho(tmp & s, l.toColor())
 
 {.experimental: "callOperator".}
 template `()`*(l: static[LogLevel], s: string) =
@@ -24,12 +41,15 @@ template `()`*(l: static[LogLevel], s: string) =
     # cant print the proc name in release mode
     when (not defined(release)) and defined(debug):
       var name: string
-      name = $getFrame().procname & "() "
+      when defined(js):
+        name = ""
+      else:
+        name = $getFrame().procname & "() "
       l.log($name & s)
     when defined(release) and defined(debug):
       l.log(s)
       
-  elif l == cmd:
+  elif l == cmd and not defined(js):
     let 
       output = execCmdEx(s)
       lines  = output.output.splitLines()

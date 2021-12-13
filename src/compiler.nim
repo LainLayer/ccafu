@@ -3,7 +3,7 @@ info "compiler started."
 
 # TODO: make this read from command line arguments
 info "reading file test.c"
-let text = readFile("test.c")
+const text = readFile("test.c")
 
 let tokens = tokenize(text)
 
