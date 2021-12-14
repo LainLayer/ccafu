@@ -1,11 +1,14 @@
-import definitions, strutils, sequtils, sugar
+import definitions
 
 type TokenKind* = enum
-  Ident, Operator, Number, MetaToken, Keyword
+  Ident     = "identifier",
+  Operator  = "operator",
+  Number    = "number",
+  MetaToken = "token",
+  Keyword   = "keyword"
 
 type Token* = object
-  row, col: int
-  children*: seq[Token]
+  row*, col*, size*: int
   case kind*: TokenKind:
   of Ident:
     identValue*: string
@@ -63,7 +66,7 @@ proc `token`*(k: Keywords): Token {.inline.} =
 
 
 proc `$`*(t: Token): string {.inline.} =
-  result = $t.kind & "("
+  result = $t.kind & " '"
   case t.kind:
   of Ident:
     result &= t.identValue
@@ -72,7 +75,15 @@ proc `$`*(t: Token): string {.inline.} =
   of Number:
     result &= $t.numberValue
   of MetaToken:
-    result &= '\"' & $t.metaValue & '\"'
+    result &= $t.metaValue
   of Keyword:
     result &= $t.keywordValue
-  result &= ") " & t.children.map(x => $x).join(",")
+  result &= "'"
+
+proc setLocation*(t: var Token, l: tuple[l,c: int], size: int) =
+  t.row = l.l
+  t.col = l.c
+  t.size = size
+
+proc where*(t: Token): string =
+  "row: " & $(t.row+1) & ", column: " & $(t.col+1)

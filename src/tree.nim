@@ -96,6 +96,7 @@ var
   tokens: seq[Token]
   ip = 0
   currentFunction = "" # TODO: track this
+  code: string
 
 template current(): Token = tokens[ip]
 
@@ -115,13 +116,13 @@ proc next(n = 1): Token {.inline, discardable.} =
     return tokens[ip]
   else:
     debug "failed"
-    err fmt"got end of file but expected more tokens on current = {peek(-n)} {n}"
+    err fmt"got end of file but expected more tokens at {peek(-n)} at {peek(-n).where}", peek(-n)
 
 proc expect(n: int, what: Token | TokenKind) =
   if ip + n >= tokens.len:
     err fmt"expected {what} but got end of file"
   elif tokens[ip + n] != what:
-    err fmt"expected {what} but got {tokens[ip + n]}"
+    err fmt"expected {what} but got {tokens[ip + n]} at {tokens[ip+n].where}", tokens[ip + n]
   else:
     return
 
@@ -130,23 +131,23 @@ proc expect(n: int, what: DataType) =
   if ip + n >= tokens.len:
     err fmt"expected {what} but got end of file"
   elif not tokens[ip + n].isType():
-    err fmt"expected type but got {tokens[ip + n]}"
+    err fmt"expected type but got {tokens[ip + n]} at {tokens[ip+n].where}", tokens[ip + n]
   else:
     let t = tokens[ip + n].toDataType
     if t != what:
-      err fmt"expected type {what} but got {tokens[ip + n]}"
+      err fmt"expected type {what} but got {tokens[ip + n]} at {tokens[ip+n].where}", tokens[ip + n]
 
 proc expectAnyType(n: int) =
   if ip + n >= tokens.len:
     err "expected any type but got end of file"
   elif not tokens[ip + n].isType():
-    err fmt"expected any type but got {tokens[ip + n]} at ip {ip}"
+    err fmt"expected any type but got {tokens[ip + n]} at {tokens[ip+n].where}", tokens[ip+n]
   else:
     discard
 
 proc parseExpression(): Expression =
   debug fmt"skipping expression"
-  while not( current() == (token RBrace) or current() == (token SemiColon)):
+  while not( current() == (token RBrace) or current() == (token SemiColon) or current() == (token LBrace)):
     next()
     # inc ip
   return Expression(exprType: IntLit, intValue: 1)
@@ -159,6 +160,7 @@ proc parseStatement(): Statement =
     while current() != (token RBrace):
       ret.instructions.add(parseStatement())
     if not finished(): next()
+    debug "end block"
     return ret
 
   elif current() == (token If):
@@ -166,12 +168,11 @@ proc parseStatement(): Statement =
     expect(1, token LParen)
     next(2)
     if current() == (token RParen):
-      err "expression expected in if statement"
+      err "expression expected in if statement", current()
     let s = Statement(
       statementType: IfStmt,
       condExpr: parseExpression(),
       body: parseStatement())
-    if not finished(): next()
     debug "end if"
     return s
     
@@ -180,12 +181,11 @@ proc parseStatement(): Statement =
     expect(1, token LParen)
     next(2)
     if peek(1) == (token RParen):
-      err "expression expected in if statement"
+      err "expression expected in while statement", current()
     let s = Statement(
       statementType: WhileStmt,
       condExpr: parseExpression(),
       body: parseStatement())
-    if not finished(): next()
     debug "end while"
     return s
 
@@ -258,7 +258,7 @@ proc parseProgram(): Program =
           next()
           break
         else:
-          err fmt"expected , or ) but got {current()}" 
+          err fmt"expected , or ) but got {current()}", current()
 
     fn.body = parseStatement()
     result.functions.add(fn)
@@ -271,15 +271,19 @@ proc `$`*(e: Expression):    string = "expression"
 proc `$`*(s: Statement):     string =
   case s.statementType:
   of IfStmt:
-    return fmt"if ({s.condExpr}):"
+    return &"if ({s.condExpr}):\n" & indent($s.body, 4)
   of WhileStmt:
-    return fmt"while ({s.condExpr}):"
+    return &"while ({s.condExpr}):\n" & indent($s.body, 4)
   of ReturnStmt:
     return fmt"return {s.value}"
   of VarStmt:
     return fmt"var {s.name} := {s.assignExpr}"
   of Block:
-    return "block:"
+    result = "block:\n" 
+    if s.instructions.len == 1:
+      result &= indent($s.instructions[0], 4)
+    else:
+      result &= s.instructions.join("\n").indent(4)
   of ExprStmt:
     return $s.self
   
@@ -288,19 +292,15 @@ proc `$`*(v: Variable):      string = fmt"{v.dataType} {v.name}"
 proc `$`*(s: seq[Variable]): string = "(" & s.join(", ") & ")"
 
 proc `$`*(f: Function):      string =
-  result = &"{f.name:<5} {f.args:<15} -> {f.ret}:\n"
-  result &= indent($f.body, 2) & "\n"
-  case f.body.statementType:
-  of Block:
-    result &= f.body.instructions.join("\n").indent(4)
-  else:
-    discard
-  
+  result = &"{f.name} {f.args} -> {f.ret}:\n"
+  result &= indent($f.body, 4) & "\n"
+
 
 proc `$`*(p: Program): string =
   "functions:\n" & p.functions.join("\n\n").indent(2)
 
 
-proc toProgram*(tokenList: seq[Token]): Program =
+proc toProgram*(tokenList: seq[Token], text: string): Program =
   tokens = tokenList
+  code = text
   return parseProgram()
