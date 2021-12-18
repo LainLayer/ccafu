@@ -102,9 +102,9 @@ template current(): Token = tokens[ip]
 
 template finished(): bool = ip >= (tokens.len-1)
 
-template peek(n: int): Token =
+proc peek(n: int): Token =
   if ip+n < tokens.len:
-    tokens[ip+n]
+    return tokens[ip+n]
   else:
     err fmt"got end of file but expected more tokens on current"
 
