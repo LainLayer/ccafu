@@ -1,6 +1,6 @@
-int main(int) {
+int main(int a) {
     int a = 2 + 2;
-    int a = 2 + 2;
+    int void a = 2 + 2;
     int a = 2 + 2;
     int a = 2 + 2;
     int a = 2 + 2;
