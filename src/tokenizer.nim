@@ -48,33 +48,30 @@ proc parseNumber(f: var Feeder): Token {.inline.} =
   result = token buffer.parseInt()
   result.setLocation(loc, buffer.len)
   debug $result
-  
+
 
 
 
 proc tokenize*(s: string): seq[Token] =
   var f = newFeeder(s)
-  discard f.next()
+  f.next()
   while f.hasMore():
     case f.top():
-    of IdentStartChars:
-      result.add parseWord(f)
-    of opchars:
-      result.add parseOperator(f)
-    of Digits:
-      result.add parseNumber(f)
+    of IdentStartChars: result.add parseWord(f)
+    of opchars: result.add parseOperator(f)
+    of Digits: result.add parseNumber(f)
     of meta:
       var t = token f.top().toMeta()
       t.setLocation(f.location(), 1)
       result.add t
-      debug $result[ result.len - 1 ]
-      discard f.next()
+      debug $result[result.len - 1]
+      f.next()
     of ws:
-      discard f.next()
+      f.next()
     else:
       err "unexpected character '" & f.top() & "'"
 
 
 
 
-  
+

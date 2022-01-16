@@ -10,7 +10,7 @@ proc newFeeder*(s: string): Feeder {.inline.} =
   result.line   = 0
   result.column = 0
 
-proc next*(f: var Feeder): char = 
+proc next*(f: var Feeder): char {.discardable.} = 
   inc f.pos
   result = f.data[f.pos]
   if result == '\n':

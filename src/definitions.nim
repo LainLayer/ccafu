@@ -31,6 +31,7 @@ proc tryKeyword*(s: string): Option[Keywords] =
   try: return some(parseEnum[Keywords](s))
   except ValueError: discard
 
+# TODO: get rid of this
 proc isTypeKeyword*(k: Keywords): bool =
   case k:
   of Int, Float, Char, Double:
@@ -83,6 +84,7 @@ type Meta* = enum
 proc toMeta*(c: char): Meta =
   try: return parseEnum[Meta]($c)
   except ValueError: assert false, "something went wrong!"
+  # TODO: handle this ^
 
 # __      ___  _ ___ _____ ___ ___ ___  _   ___ ___ 
 # \ \    / / || |_ _|_   _| __/ __| _ \/_\ / __| __|

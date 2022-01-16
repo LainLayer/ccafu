@@ -1,15 +1,15 @@
 import token, logger, strformat, definitions, strutils
 
-# implement a tree visualization when im done glueing this together
+# TODO: implement a tree visualization when im done glueing this together
 # 1) check https://rosettacode.org/wiki/Visualize_a_tree#Nim
 
 # TODO: store line and column data inside token
 
 type
   ExpressionType = enum
-    IntLit, StrLit, Identifier,
-    Indexing, FunctionCall, BinaryOp,
-    UnaryOp, PostInc, PostDec
+    IntLit  , StrLit      , Identifier,
+    Indexing, FunctionCall, BinaryOp  ,
+    UnaryOp , PostInc     , PostDec
 
   Expression = ref object
     case exprType: ExpressionType:
@@ -33,7 +33,8 @@ type
       to: Expression
 
   StatementType = enum
-    IfStmt, WhileStmt, ReturnStmt, VarStmt, Block, ExprStmt
+    IfStmt , WhileStmt, ReturnStmt,
+    VarStmt, Block    , ExprStmt
 
   Statement = ref object
     case statementType: StatementType:
@@ -51,11 +52,11 @@ type
     else:
       self: Expression
       
-  DataType = enum
-    IntegerType = "int",
-    FloatType   = "float",
+  DataType = enum # TODO: pointers
+    IntegerType = "int"   ,
+    FloatType   = "float" ,
     DoubleType  = "double",
-    CharType    = "char",
+    CharType    = "char"  ,
     VoidType    = "void"
     
   Variable = tuple
@@ -127,7 +128,7 @@ proc expect(n: int, what: Token | TokenKind) =
     return
 
 proc expect(n: int, what: DataType) =
-  # not sure if i need this
+  # TODO: not sure if i need this
   if ip + n >= tokens.len:
     err fmt"expected {what} but got end of file"
   elif not tokens[ip + n].isType():
@@ -147,12 +148,13 @@ proc expectAnyType(n: int) =
 
 proc parseExpression(): Expression =
   debug fmt"skipping expression"
-  while not( current() == (token RBrace) or current() == (token SemiColon) or current() == (token LBrace)):
+  while not( current() == (token RBrace) or current() == (token Semicolon) or current() == (token LBrace)):
     next()
     # inc ip
   return Expression(exprType: IntLit, intValue: 1)
 
 proc parseStatement(): Statement =
+  # TODO: make parses stop on the last token
   if current() == (token LBrace): # block statement
     debug "block"
     let ret = Statement(statementType: Block)
@@ -195,7 +197,7 @@ proc parseStatement(): Statement =
     let s = Statement(
         statementType: ReturnStmt,
         value: parseExpression())
-    expect(0, token SemiColon)
+    expect(0, token Semicolon)
     if not finished(): next()
     debug "end return"
     return s
@@ -211,7 +213,7 @@ proc parseStatement(): Statement =
         statementType: VarStmt,
         assignExpr: parseExpression(),
         name: n)
-    expect(0, token SemiColon)
+    expect(0, token Semicolon)
     if not finished(): next()
     debug "end variable"
     return s
@@ -222,7 +224,7 @@ proc parseStatement(): Statement =
         statementType: ExprStmt,
         self: parseExpression())
     # next()
-    expect(0, token SemiColon)
+    expect(0, token Semicolon)
     debug "end standalone expression"
     return s
 
@@ -266,9 +268,9 @@ proc parseProgram(): Program =
 
 
 
-proc `$`*(e: Expression):    string = "expression"
+proc `$`*(e: Expression): string = "expression"
 
-proc `$`*(s: Statement):     string =
+proc `$`*(s: Statement): string =
   case s.statementType:
   of IfStmt:
     return &"if ({s.condExpr}):\n" & indent($s.body, 4)
@@ -287,7 +289,7 @@ proc `$`*(s: Statement):     string =
   of ExprStmt:
     return $s.self
   
-proc `$`*(v: Variable):      string = fmt"{v.dataType} {v.name}"
+proc `$`*(v: Variable): string = fmt"{v.dataType} {v.name}"
 
 proc `$`*(s: seq[Variable]): string = "(" & s.join(", ") & ")"
 
