@@ -1,4 +1,4 @@
-# C compiler attempt for university (aka CCAFU)
+# C compiler attempt for university, aka CCAFU (UNFINIHSED)
 ![build](https://github.com/LainLayer/ccafu/workflows/CI/badge.svg)
 
 This is a university project in which i try to make a C compiler in nim.
